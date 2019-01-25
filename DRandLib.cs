@@ -22,7 +22,7 @@ namespace Neo.SmartContract
         public extern static BigInteger Add128(this sbyte source);
 
         // Concat 0x00 to input byte array. Example: [ffaa] => [ffaa00]
-        // PUSHM1 0x4F, INC 0x8B, SWAP 0x7C, CAT 0x7E
+        // PUSHM1 0x4F, INC 0x8B, CAT 0x7E
         [Script("4f8b7e")]
         public extern static byte[] ConcatZero(this byte[] source);
 
@@ -94,35 +94,16 @@ namespace Neo.SmartContract
         // price: this only depends on from/to interval.
         public static sbyte[] ShuffleBytesChunk(this sbyte[] array, int from, int to, byte[] baseHash, int nbytes=1)
         {
+            // guarantee there is enough bytes to consume
             (baseHash.Length >= (to-from)*nbytes).Assert();
-            Runtime.Notify("base hash");
-            Runtime.Notify(baseHash);
-
-            int len = array.Length;
-            //int rand = (int)(nextHash.rand_hash(to - from)+from);
-            //Runtime.Notify(from);
-            //Runtime.Notify(to);
-            //Runtime.Notify(rand);
             int k = 0;
-            int i;
-            for(i = from; i < to; i++)
+            for(int i = from; i < to; i++)
             {
-                // get
-                Runtime.Notify("Hash elements");
-                byte[] elemHash = baseHash.Range(k, nbytes);
-                Runtime.Notify(elemHash);
-                byte[] elemHashZero = elemHash.ConcatZero();
-                Runtime.Notify(elemHashZero);
-                BigInteger value = elemHashZero.ToBigInteger();
-                Runtime.Notify(value);
-
+                // concat zero to guarantee positive integers
+                BigInteger x = baseHash.Range(k, nbytes).ConcatZero().ToBigInteger();
                 k+=nbytes;
-                BigInteger range = len - i;
-                Runtime.Notify(range);
                 // j in [i, len)
-                int j = (int) ((value % (range)) + i);
-                Runtime.Notify(i);
-                Runtime.Notify(j);
+                int j = (int) ((x % (array.Length - i)) + i);
                 sbyte itemj = array[j];
                 sbyte itemi = array[i];
                 array[j] = itemi;
@@ -204,12 +185,12 @@ namespace Neo.SmartContract
 */
             //sb = sb.ShuffleBytesSHA256(b.SHA256());
             byte[] hash = b.SHA256().SHA256();
-            sbyte[] sb1 = sb.ShuffleBytesChunk(0, sb.Length, hash);
-            sbyte[] sb2 = sb.ShuffleBytesChunk(0, 5, hash);
-            sbyte[] sb3 = sb2.ShuffleBytesChunk(5, sb2.Length, hash.Range(5, hash.Length-3));
+            sbyte[] sb1 = sb.ShuffleBytesChunk(0, sb.Length, hash, 2);
+            //sbyte[] sb2 = sb.ShuffleBytesChunk(0, 5, hash);
+            //sbyte[] sb3 = sb2.ShuffleBytesChunk(5, sb2.Length, hash.Range(5, hash.Length-3));
             Runtime.Notify(sb1);
             //Runtime.Notify(sb2);
-            Runtime.Notify(sb3);
+            //Runtime.Notify(sb3);
             return sb.AsByteArray();
 
         }
