@@ -85,14 +85,14 @@ namespace Neo.SmartContract
         // Fisher-Yates random shuffle for [from, to) interval using 256-bit hash on input byte array
         // returns updated byte array
         // price: this may require several SHA-256 in a single round
-        public static sbyte[] ShuffleBytes(this sbyte[] array, byte[] hash)
+        public static sbyte[] ShuffleBytes(this sbyte[] array, byte[] nextHash)
         {
             Runtime.Notify("initial hash");
-            Runtime.Notify(hash);
+            Runtime.Notify(nextHash);
             int i;
-            byte[] nextHash = hash;
+            //byte[] nextHash = hash;
             int len = array.Length;
-            sbyte[] shash = hash.AsSbyteArray();
+            sbyte[] shash = nextHash.AsSbyteArray();
             //int rand = (int)(nextHash.rand_hash(to - from)+from);
             //Runtime.Notify(from);
             //Runtime.Notify(to);
@@ -105,7 +105,7 @@ namespace Neo.SmartContract
                     Runtime.Notify("generating new hash!");
                     nextHash = nextHash.SHA256(); // update hash
                     Runtime.Notify(nextHash);
-                    shash = hash.AsSbyteArray();  // type convertion byte[] to sbyte[] (all information is kept original)
+                    shash = nextHash.AsSbyteArray();  // type convertion byte[] to sbyte[] (all information is kept original)
                     k = 0;
                 }
                 //int j = (int)(nextHash.rand_hash(to - i)+i);
