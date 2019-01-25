@@ -88,7 +88,7 @@ namespace Neo.SmartContract
 
 
         // Fisher-Yates random shuffle by swaps on chunk i=[from, to) j=[from, N) interval using
-        //   baseHash (not exactly 32-byte) on given input bytearray
+        //   baseHash (not exactly 32-byte) on given complete input bytearray
         // returns updated byte array
         // baseHash length should be >= (to-from)*nbytes
         // price: this only depends on from/to interval.
@@ -112,12 +112,12 @@ namespace Neo.SmartContract
             return array; // copy based array
         }
 
-        // Fisher-Yates random shuffle by swaps on chunk i=[from, to) j=[from, to) interval using
-        //   baseHash (not exactly 32-byte) on given input bytearray
+        // Fisher-Yates random shuffle by swaps using baseHash (not exactly 32-byte) on
+        //    given subsequence [from, to) of input bytearray
         // returns updated byte array
         // baseHash length should be >= (to-from)*nbytes
         // price: this only depends on from/to interval.
-        public static sbyte[] ShuffleBytesChunkLimited(this sbyte[] array, int from, int to, byte[] baseHash, int nbytes=1)
+        public static sbyte[] ShuffleSubseqBytes(this sbyte[] array, int from, int to, byte[] baseHash, int nbytes=1)
         {
             // guarantee there is enough bytes to consume
             (baseHash.Length >= (to-from)*nbytes).Assert();
@@ -213,7 +213,7 @@ namespace Neo.SmartContract
             sbyte[] sb1 = sb.ShuffleBytesChunk(0, sb.Length, hash);
             //sbyte[] sb2 = sb.ShuffleBytesChunk(0, 5, hash);
             //sbyte[] sb3 = sb2.ShuffleBytesChunk(5, sb2.Length, hash.Range(5, hash.Length-3));
-            sbyte[] sb4 = sb.ShuffleBytesChunkLimited(2, sb.Length-2, hash);
+            sbyte[] sb4 = sb.ShuffleSubseqBytes(2, sb.Length-2, hash);
             Runtime.Notify(sb1);
             //Runtime.Notify(sb2);
             //Runtime.Notify(sb3);
