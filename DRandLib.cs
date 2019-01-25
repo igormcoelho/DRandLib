@@ -112,6 +112,31 @@ namespace Neo.SmartContract
             return array; // copy based array
         }
 
+        // Fisher-Yates random shuffle by swaps on chunk i=[from, to) j=[from, to) interval using
+        //   baseHash (not exactly 32-byte) on given input bytearray
+        // returns updated byte array
+        // baseHash length should be >= (to-from)*nbytes
+        // price: this only depends on from/to interval.
+        public static sbyte[] ShuffleBytesChunkLimited(this sbyte[] array, int from, int to, byte[] baseHash, int nbytes=1)
+        {
+            // guarantee there is enough bytes to consume
+            (baseHash.Length >= (to-from)*nbytes).Assert();
+            int k = 0;
+            for(int i = from; i < to; i++)
+            {
+                // concat zero to guarantee positive integers
+                BigInteger x = baseHash.Range(k, nbytes).ConcatZero().ToBigInteger();
+                k+=nbytes;
+                // j in [i, len)
+                int j = (int) ((x % (to - i)) + i);
+                sbyte itemj = array[j];
+                sbyte itemi = array[i];
+                array[j] = itemi;
+                array[i] = itemj;
+            }
+            return array; // copy based array
+        }
+
         // Fisher-Yates random shuffle using 256-bit hash on input byte array
         // returns updated byte array
         // price: this may require several SHA-256 in a single round. 10 GAS around ~96 elements
@@ -185,12 +210,14 @@ namespace Neo.SmartContract
 */
             //sb = sb.ShuffleBytesSHA256(b.SHA256());
             byte[] hash = b.SHA256().SHA256();
-            sbyte[] sb1 = sb.ShuffleBytesChunk(0, sb.Length, hash, 2);
+            sbyte[] sb1 = sb.ShuffleBytesChunk(0, sb.Length, hash);
             //sbyte[] sb2 = sb.ShuffleBytesChunk(0, 5, hash);
             //sbyte[] sb3 = sb2.ShuffleBytesChunk(5, sb2.Length, hash.Range(5, hash.Length-3));
+            sbyte[] sb4 = sb.ShuffleBytesChunkLimited(2, sb.Length-2, hash);
             Runtime.Notify(sb1);
             //Runtime.Notify(sb2);
             //Runtime.Notify(sb3);
+            Runtime.Notify(sb4);
             return sb.AsByteArray();
 
         }
