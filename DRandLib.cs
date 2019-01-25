@@ -55,7 +55,7 @@ namespace Neo.SmartContract
         // Fisher-Yates random shuffle for [from, to) interval using 256-bit hash on input object array
         // returns next hash, using SHA-256
         // price: ~(to-from)*
-        public static byte[] Shuffle256(this object[] array, int from, int to, byte[] hash)
+        public static byte[] ShuffleArray256Hash(this object[] array, int from, int to, byte[] hash)
         {
             int i;
             byte[] nextHash = hash;
@@ -85,7 +85,7 @@ namespace Neo.SmartContract
         // Fisher-Yates random shuffle for [from, to) interval using 256-bit hash on input byte array
         // returns updated byte array
         // price: this may require several SHA-256 in a single round
-        public static sbyte[] ShuffleBytes(this sbyte[] array, byte[] nextHash)
+        public static sbyte[] ShuffleBytesSHA256(this sbyte[] array, byte[] nextHash)
         {
             Runtime.Notify("initial hash");
             Runtime.Notify(nextHash);
@@ -153,7 +153,7 @@ namespace Neo.SmartContract
             //    sb[i] = ((BigInteger)(array[i])).AsSbyte(); // causes strange error: TODO
             }
 */
-            sb = sb.ShuffleBytes(b.SHA256());
+            sb = sb.ShuffleBytesSHA256(b.SHA256());
 
             return sb.AsByteArray();
 
