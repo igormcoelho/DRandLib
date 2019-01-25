@@ -15,6 +15,12 @@ namespace Neo.SmartContract
         [OpCode(OpCode.SHA256)]
         public extern static byte[] SHA256(this byte[] data);
 
+
+        // Adjust sbyte to range [0, 255]
+        //PUSHDATA1 = 0x4C 02 8000 (+128) ADD = 0x93
+        [Script("4c02800093")]
+        public extern static BigInteger Add128(this sbyte source);
+
         [OpCode(OpCode.ABS)]
         public extern static BigInteger Abs(this BigInteger data);
 
@@ -112,6 +118,7 @@ namespace Neo.SmartContract
         public static byte[] Main(byte[] b)
         {
             sbyte[] sb = b.AsSbyteArray();
+
             Runtime.Notify(sb);
             Runtime.Notify(sb.Length);
 
@@ -137,6 +144,7 @@ namespace Neo.SmartContract
             }
 
             return sb.AsByteArray();
+
         }
     }
 }
