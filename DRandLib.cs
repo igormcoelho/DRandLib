@@ -81,7 +81,7 @@ namespace Neo.SmartContract
             return nextHash;
         }
 
-        /*
+
         // Fisher-Yates random shuffle for [from, to) interval using 256-bit hash on input byte array
         // returns updated byte array
         // price: this may require several SHA-256 in a single round
@@ -89,28 +89,32 @@ namespace Neo.SmartContract
         {
             int i;
             byte[] nextHash = hash;
+            sbyte[] shash = hash.AsSbyteArray();
             //int rand = (int)(nextHash.rand_hash(to - from)+from);
             //Runtime.Notify(from);
             //Runtime.Notify(to);
             //Runtime.Notify(rand);
-
+            int k = 0;
             for(i = from; i < to; i++)
             {
+                if(k == 32) // 32-bytes
+                {
+                    nextHash = nextHash.SHA256(); // update hash
+                    shash = hash.AsSbyteArray();  // type convertion byte[] to sbyte[] (all information is kept original)
+                    k = 0;
+                }
                 //int j = (int)(nextHash.rand_hash(to - i)+i);
-                int j = (int)nextHash.RandHash256Interval(i, to);
+                int j = (int) ((shash[k].Add128() % (to - i)) + i); //(int)nextHash.RandHash256Interval(i, to);
                 Runtime.Notify(i);
                 Runtime.Notify(j);
-                object obj = array[j];
-                array[j] = array[i];
-                array[i] = obj;
-                nextHash = nextHash.SHA256();
+                sbyte itemj = array[j];
+                sbyte itemi = array[i];
+                array[j] = itemi;
+                array[i] = itemj;
+                k++;
             }
-
-            Runtime.Notify("finished shuffle!");
-
-            return nextHash;
+            return array; // copy based array
         }
-        */
     }
 
     public class RandomShuffle : Framework.SmartContract
@@ -122,6 +126,7 @@ namespace Neo.SmartContract
             Runtime.Notify(sb);
             Runtime.Notify(sb.Length);
 
+/*
             object[] array = new object[sb.Length];
 
             int i=0;
@@ -142,6 +147,8 @@ namespace Neo.SmartContract
                 sb[i] = elem;
             //    sb[i] = ((BigInteger)(array[i])).AsSbyte(); // causes strange error: TODO
             }
+*/
+            sb = sb.ShuffleBytes(0, sb.Length, b.SHA256());
 
             return sb.AsByteArray();
 
