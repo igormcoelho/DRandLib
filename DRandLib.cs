@@ -18,33 +18,19 @@ namespace Neo.SmartContract
         [OpCode(OpCode.ABS)]
         public extern static BigInteger Abs(this BigInteger data);
 
-
-        // reduce between [0, max). Example: Reduce(7, 4) => 7 % 4 = 3
-        public static BigInteger Reduce(BigInteger x, BigInteger max)
-        {
-            // this could introduce some bias towards smaller numbers
-            return x % max;
-        }
-
-        // reduce between [begin,end).  Example: Reduce(7, 1, 3) => 7 % (3-1) + 1 = 2
-        public static BigInteger ReduceInterval(BigInteger x, BigInteger begin, BigInteger end)
-        {
-            // this could introduce some bias towards smaller numbers
-            return (x % (end - begin)) + begin;
-        }
-
         // converts 256-bit hash as a non-negative integer < max, i.e., in interval [0, max)
         // max can be up to 256-bit big integer
         public static BigInteger RandHash256(this byte[] hash, BigInteger max)
         {
             // value cannot be negative (using Abs to not surpass 32-byte limit and keep positive)
-            BigInteger bi = hash.AsBigInteger().Abs();
+            BigInteger x = hash.AsBigInteger().Abs();
             Runtime.Notify("source number:");
-            Runtime.Notify(bi);
+            Runtime.Notify(x);
             Runtime.Notify("max range:");
             Runtime.Notify(max);
             Runtime.Notify("reduced number:");
-            BigInteger reduced = Reduce(bi, max);
+            // reduce between [0, max). Example: Reduce(7, 4) => 7 % 4 = 3
+            BigInteger reduced = x % max; // this could introduce some bias towards smaller numbers
             Runtime.Notify(reduced);
             return reduced;
         }
@@ -54,8 +40,9 @@ namespace Neo.SmartContract
         public static BigInteger RandHash256Interval(this byte[] hash, BigInteger begin, BigInteger end)
         {
             // value cannot be negative (using Abs to not surpass 32-byte limit and keep positive)
-            BigInteger bi = hash.AsBigInteger().Abs();
-            BigInteger reduced = ReduceInterval(bi, begin, end);
+            BigInteger x = hash.AsBigInteger().Abs();
+            // reduce between [begin,end).  Example: Reduce(7, 1, 3) => 7 % (3-1) + 1 = 2
+            BigInteger reduced = (x % (end - begin)) + begin; // this could introduce some bias towards smaller numbers
             return reduced;
         }
 
@@ -148,7 +135,6 @@ namespace Neo.SmartContract
                 sb[i] = elem;
             //    sb[i] = ((BigInteger)(array[i])).AsSbyte(); // causes strange error: TODO
             }
-
 
             return sb.AsByteArray();
         }
