@@ -21,6 +21,11 @@ namespace Neo.SmartContract
         [Script("4c02800093")]
         public extern static BigInteger Add128(this sbyte source);
 
+        // Concat 0x00 to input byte array. Example: [ffaa] => [ffaa00]
+        // PUSHM1 0x4F, INC 0x8B, SWAP 0x7C, CAT 0x7E
+        [Script("4f8b7e")]
+        public extern static byte[] ConcatZero(this byte[] source);
+
         [OpCode(OpCode.ABS)]
         public extern static BigInteger Abs(this BigInteger data);
 
@@ -82,9 +87,53 @@ namespace Neo.SmartContract
         }
 
 
-        // Fisher-Yates random shuffle for [from, to) interval using 256-bit hash on input byte array
+        // Fisher-Yates random shuffle by swaps on chunk i=[from, to) j=[from, N) interval using
+        //   baseHash (not exactly 32-byte) on given input bytearray
         // returns updated byte array
-        // price: this may require several SHA-256 in a single round
+        // baseHash length should be >= (to-from)*nbytes
+        // price: this only depends on from/to interval.
+        public static sbyte[] ShuffleBytesChunk(this sbyte[] array, int from, int to, byte[] baseHash, int nbytes=1)
+        {
+            (baseHash.Length >= (to-from)*nbytes).Assert();
+            Runtime.Notify("base hash");
+            Runtime.Notify(baseHash);
+
+            int len = array.Length;
+            //int rand = (int)(nextHash.rand_hash(to - from)+from);
+            //Runtime.Notify(from);
+            //Runtime.Notify(to);
+            //Runtime.Notify(rand);
+            int k = 0;
+            int i;
+            for(i = from; i < to; i++)
+            {
+                // get
+                Runtime.Notify("Hash elements");
+                byte[] elemHash = baseHash.Range(k, nbytes);
+                Runtime.Notify(elemHash);
+                byte[] elemHashZero = elemHash.ConcatZero();
+                Runtime.Notify(elemHashZero);
+                BigInteger value = elemHashZero.ToBigInteger();
+                Runtime.Notify(value);
+
+                k+=nbytes;
+                BigInteger range = len - i;
+                Runtime.Notify(range);
+                // j in [i, len)
+                int j = (int) ((value % (range)) + i);
+                Runtime.Notify(i);
+                Runtime.Notify(j);
+                sbyte itemj = array[j];
+                sbyte itemi = array[i];
+                array[j] = itemi;
+                array[i] = itemj;
+            }
+            return array; // copy based array
+        }
+
+        // Fisher-Yates random shuffle using 256-bit hash on input byte array
+        // returns updated byte array
+        // price: this may require several SHA-256 in a single round. 10 GAS around ~96 elements
         public static sbyte[] ShuffleBytesSHA256(this sbyte[] array, byte[] nextHash)
         {
             Runtime.Notify("initial hash");
@@ -153,8 +202,14 @@ namespace Neo.SmartContract
             //    sb[i] = ((BigInteger)(array[i])).AsSbyte(); // causes strange error: TODO
             }
 */
-            sb = sb.ShuffleBytesSHA256(b.SHA256());
-
+            //sb = sb.ShuffleBytesSHA256(b.SHA256());
+            byte[] hash = b.SHA256().SHA256();
+            sbyte[] sb1 = sb.ShuffleBytesChunk(0, sb.Length, hash);
+            sbyte[] sb2 = sb.ShuffleBytesChunk(0, 5, hash);
+            sbyte[] sb3 = sb2.ShuffleBytesChunk(5, sb2.Length, hash.Range(5, hash.Length-3));
+            Runtime.Notify(sb1);
+            //Runtime.Notify(sb2);
+            Runtime.Notify(sb3);
             return sb.AsByteArray();
 
         }
