@@ -6,7 +6,7 @@ using namespace std;
 
 int main()
 {
-    bool verbose = false;
+    bool verbose = true;
     // this application will test
     //    random range (i,j) for swaps
     //    based on byte entropy
