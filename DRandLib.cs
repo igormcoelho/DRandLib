@@ -227,6 +227,8 @@ namespace Neo.SmartContract
 
             sbyte[] sb = b.AsSbyteArray();
             Runtime.Notify(sb);
+
+            /*
             object[] array = new object[sb.Length];
 
             int i=0;
@@ -245,10 +247,13 @@ namespace Neo.SmartContract
                 sb[i] = elem;
             //    sb[i] = ((BigInteger)(array[i])).AsSbyte(); // causes strange error: TODO
             }
-
             Runtime.Notify(sb);
+            */
+            byte[] b1 = b.ShuffleBytesChunk(0, b.Length, hash);
 
-            return sb.AsByteArray();//b;//b1;
+            Runtime.Notify(b1);
+
+            return b1;//sb.AsByteArray();//b;//b1;
         }
     }
 }
