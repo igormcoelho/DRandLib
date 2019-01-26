@@ -51,6 +51,12 @@ namespace Neo.SmartContract
             return reduced;
         }
 
+        // Adjust value x in interval [begin, end)
+        public static BigInteger ModInterval(this BigInteger x, BigInteger begin, BigInteger end)
+        {
+            return (x % (end - begin)) + begin;
+        }
+
         // Fisher-Yates random shuffle for [from, to) interval using 256-bit hash on input object array
         // returns next hash, using SHA-256
         // price: ~(to-from)*
@@ -97,7 +103,7 @@ namespace Neo.SmartContract
                 BigInteger x = baseHash.Range(k, nbytes).ConcatZero().ToBigInteger();
                 k+=nbytes;
                 // j in [i, len)
-                int j = (int) ((x % (array.Length - i)) + i);
+                int j = (int) x.ModInterval(i, array.Length);
                 object itemj = array[j];
                 array[j] = array[i];
                 array[i] = itemj;
@@ -122,7 +128,7 @@ namespace Neo.SmartContract
                 BigInteger x = baseHash.Range(k, nbytes).ConcatZero().ToBigInteger();
                 k+=nbytes;
                 // j in [i, len)
-                int j = (int) ((x % (array.Length - i)) + i);
+                int j = (int) x.ModInterval(i, array.Length);
                 sbyte itemj = array[j];
                 sbyte itemi = array[i];
                 array[j] = itemi;
@@ -149,7 +155,7 @@ namespace Neo.SmartContract
                 BigInteger x = baseHash.Range(k, nbytes).ConcatZero().ToBigInteger();
                 k+=nbytes;
                 // j in [i, len)
-                int j = (int) ((x % (to - i)) + i);
+                int j = (int) x.ModInterval(i, to);
                 sbyte itemj = array[j];
                 sbyte itemi = array[i];
                 array[j] = itemi;
@@ -186,7 +192,7 @@ namespace Neo.SmartContract
                     k = 0;
                 }
                 //int j = (int)(nextHash.rand_hash(to - i)+i);
-                int j = (int) ((shash[k].Add128() % (len - i)) + i); //(int)nextHash.RandHash256Interval(i, to);
+                int j = (int) shash[k].Add128().ModInterval(i, len); //(int)nextHash.RandHash256Interval(i, to);
                 //Runtime.Notify(i);
                 //Runtime.Notify(j);
                 sbyte itemj = array[j];
