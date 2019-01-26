@@ -90,12 +90,14 @@ namespace Neo.SmartContract
         // Fisher-Yates random shuffle by swaps on chunk i=[from, to) j=[from, N) interval using
         //   baseHash (not exactly 32-byte) on given complete input bytearray
         // returns updated byte array
+        // nbytes define how many bytes are consumed on each random step
         // baseHash length should be >= (to-from)*nbytes
         // price: this only depends on from/to interval.
-        public static sbyte[] ShuffleBytesChunk(this sbyte[] array, int from, int to, byte[] baseHash, int nbytes=1)
+        public static byte[] ShuffleBytesChunk(this byte[] barray, int from, int to, byte[] baseHash, int nbytes=1)
         {
             // guarantee there is enough bytes to consume
-            (baseHash.Length >= (to-from)*nbytes).Assert();
+            //(baseHash.Length >= (to-from)*nbytes).Assert();
+            sbyte[] array = barray.AsSbyteArray();
             int k = 0;
             for(int i = from; i < to; i++)
             {
@@ -109,18 +111,20 @@ namespace Neo.SmartContract
                 array[j] = itemi;
                 array[i] = itemj;
             }
-            return array; // copy based array
+            return array.AsByteArray(); // copy based array
         }
 
-        // Fisher-Yates random shuffle by swaps using baseHash (not exactly 32-byte) on
+        // Fisher-Yates random shuffle by swaps using baseHash (less or more than 32-byte) on
         //    given subsequence [from, to) of input bytearray
         // returns updated byte array
+        // nbytes define how many bytes are consumed on each random step
         // baseHash length should be >= (to-from)*nbytes
         // price: this only depends on from/to interval.
-        public static sbyte[] ShuffleSubseqBytes(this sbyte[] array, int from, int to, byte[] baseHash, int nbytes=1)
+        public static byte[] ShuffleSubseqBytes(this byte[] barray, int from, int to, byte[] baseHash, int nbytes=1)
         {
             // guarantee there is enough bytes to consume
-            (baseHash.Length >= (to-from)*nbytes).Assert();
+            //(baseHash.Length >= (to-from)*nbytes).Assert();
+            sbyte[] array = barray.AsSbyteArray();
             int k = 0;
             for(int i = from; i < to; i++)
             {
@@ -134,16 +138,17 @@ namespace Neo.SmartContract
                 array[j] = itemi;
                 array[i] = itemj;
             }
-            return array; // copy based array
+            return array.AsByteArray(); // copy based array
         }
 
         // Fisher-Yates random shuffle using 256-bit hash on input byte array
         // returns updated byte array
         // price: this may require several SHA-256 in a single round. 10 GAS around ~96 elements
-        public static sbyte[] ShuffleBytesSHA256(this sbyte[] array, byte[] nextHash)
+        public static byte[] ShuffleBytesSHA256(this byte[] barray, byte[] nextHash)
         {
             Runtime.Notify("initial hash");
             Runtime.Notify(nextHash);
+            sbyte[] array = barray.AsSbyteArray();
             int i;
             //byte[] nextHash = hash;
             int len = array.Length;
@@ -173,7 +178,7 @@ namespace Neo.SmartContract
                 array[i] = itemj;
                 k++;
             }
-            return array; // copy based array
+            return array.AsByteArray(); // copy based array
         }
     }
 
@@ -181,10 +186,7 @@ namespace Neo.SmartContract
     {
         public static byte[] Main(byte[] b)
         {
-            sbyte[] sb = b.AsSbyteArray();
-
-            Runtime.Notify(sb);
-            Runtime.Notify(sb.Length);
+            Runtime.Notify(b);
 
 /*
             object[] array = new object[sb.Length];
@@ -210,15 +212,15 @@ namespace Neo.SmartContract
 */
             //sb = sb.ShuffleBytesSHA256(b.SHA256());
             byte[] hash = b.SHA256().SHA256();
-            sbyte[] sb1 = sb.ShuffleBytesChunk(0, sb.Length, hash);
-            //sbyte[] sb2 = sb.ShuffleBytesChunk(0, 5, hash);
-            //sbyte[] sb3 = sb2.ShuffleBytesChunk(5, sb2.Length, hash.Range(5, hash.Length-3));
-            sbyte[] sb4 = sb.ShuffleSubseqBytes(2, sb.Length-2, hash);
-            Runtime.Notify(sb1);
-            //Runtime.Notify(sb2);
-            //Runtime.Notify(sb3);
-            Runtime.Notify(sb4);
-            return sb.AsByteArray();
+            byte[] b1 = b.ShuffleBytesChunk(0, b.Length, hash);
+            //byte[] b2 = b.ShuffleBytesChunk(0, 5, hash);
+            //byte[] b3 = b2.ShuffleBytesChunk(5, b2.Length, hash.Range(5, hash.Length-3));
+            byte[] b4 = b.ShuffleSubseqBytes(2, b.Length-2, hash);
+            Runtime.Notify(b1);
+            //Runtime.Notify(b2);
+            //Runtime.Notify(b3);
+            Runtime.Notify(b4);
+            return b1;
 
         }
     }
