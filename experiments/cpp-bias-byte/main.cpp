@@ -43,7 +43,7 @@ int main()
                 if(count_j[j] > max_j)
                     max_j = count_j[j];
                 if(verbose)
-                    cout << "i=" << i << " j=" << j << " : " << count_j[j] << endl;
+                    cout << "given i=" << i << ", j=" << j << " has choices : " << count_j[j] << endl;
             }
             summary_i[i] = make_pair(min_j, max_j);
         } // finish i
@@ -54,7 +54,7 @@ int main()
         {
             int diff_i = summary_i[i].second - summary_i[i].first; // max - min
             if(verbose)
-                cout << "n=" << n << " i=" << i << " diff = " << summary_i[i].second << " - " << summary_i[i].first << "=" << diff_i << endl;
+                cout << "partial summary for n=" << n << ": i=" << i << " (rand range: " << (n-i) << ") diff = " << summary_i[i].second << " - " << summary_i[i].first << "=" << diff_i << endl;
             if(diff_i < min_i_diff)
                 min_i_diff = diff_i;
             if(diff_i > max_i_diff)
@@ -74,5 +74,8 @@ int main()
 
     // this application demonstrates that the maximum difference (bias) between element selection is 1
     // in other words, very little (minimum) bias is added by using small range byte to select random elements
+    // this is slighly consistent with https://ericlippert.com/2013/12/16/how-much-bias-is-introduced-by-the-remainder-technique/
+    // every power 2 range introduces no bias at all (diff = 0)
+    // however, other ranges seem to introduce a maximum bias of 1... which is unexpected, but very good for proposed shuffle technique.
     return 0;
 }
