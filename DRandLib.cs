@@ -33,16 +33,10 @@ namespace Neo.SmartContract
         // max can be up to 256-bit big integer
         public static BigInteger RandHash256(this byte[] hash, BigInteger max)
         {
-            // value cannot be negative (using Abs to not surpass 32-byte limit and keep positive)
+            // value cannot be negative (using Abs since appending zero could surpass 32-byte limit)
             BigInteger x = hash.AsBigInteger().Abs();
-            Runtime.Notify("source number:");
-            Runtime.Notify(x);
-            Runtime.Notify("max range:");
-            Runtime.Notify(max);
-            Runtime.Notify("reduced number:");
             // reduce between [0, max). Example: Reduce(7, 4) => 7 % 4 = 3
             BigInteger reduced = x % max; // this could introduce some bias towards smaller numbers
-            Runtime.Notify(reduced);
             return reduced;
         }
 
@@ -50,7 +44,7 @@ namespace Neo.SmartContract
         // begin < end can be up to 256-bit big integers
         public static BigInteger RandHash256Interval(this byte[] hash, BigInteger begin, BigInteger end)
         {
-            // value cannot be negative (using Abs to not surpass 32-byte limit and keep positive)
+            // value cannot be negative (using Abs since appending zero could surpass 32-byte limit)
             BigInteger x = hash.AsBigInteger().Abs();
             // reduce between [begin,end).  Example: Reduce(7, 1, 3) => 7 % (3-1) + 1 = 2
             BigInteger reduced = (x % (end - begin)) + begin; // this could introduce some bias towards smaller numbers
@@ -86,17 +80,40 @@ namespace Neo.SmartContract
             return nextHash;
         }
 
+        // Fisher-Yates random shuffle by swaps on chunk i=[from, to) j=[from, N) interval using
+        //   baseHash (not exactly 32-byte) on given complete input array
+        // returns updated byte array
+        // nbytes define how many bytes are consumed on each random step
+        // baseHash length should be >= (to-from)*nbytes
+        // price: this only depends on from/to interval and baseHash calculation. If using Sha256, 10 GAS shuffles ~92 elements
+        public static void ShuffleArrayChunk(this object[] array, int from, int to, byte[] baseHash, int nbytes=1)
+        {
+            // guarantee there is enough bytes to consume
+            (baseHash.Length >= (to-from)*nbytes).Assert();
+            int k = 0;
+            for(int i = from; i < to; i++)
+            {
+                // concat zero to guarantee positive integers
+                BigInteger x = baseHash.Range(k, nbytes).ConcatZero().ToBigInteger();
+                k+=nbytes;
+                // j in [i, len)
+                int j = (int) ((x % (array.Length - i)) + i);
+                object itemj = array[j];
+                array[j] = array[i];
+                array[i] = itemj;
+            }
+        }
 
         // Fisher-Yates random shuffle by swaps on chunk i=[from, to) j=[from, N) interval using
         //   baseHash (not exactly 32-byte) on given complete input bytearray
         // returns updated byte array
         // nbytes define how many bytes are consumed on each random step
         // baseHash length should be >= (to-from)*nbytes
-        // price: this only depends on from/to interval.
+        // price: this only depends on from/to interval and baseHash calculation. If using Sha256, 10 GAS shuffles ~92 elements
         public static byte[] ShuffleBytesChunk(this byte[] barray, int from, int to, byte[] baseHash, int nbytes=1)
         {
             // guarantee there is enough bytes to consume
-            //(baseHash.Length >= (to-from)*nbytes).Assert();
+            (baseHash.Length >= (to-from)*nbytes).Assert();
             sbyte[] array = barray.AsSbyteArray();
             int k = 0;
             for(int i = from; i < to; i++)
@@ -123,7 +140,7 @@ namespace Neo.SmartContract
         public static byte[] ShuffleSubseqBytes(this byte[] barray, int from, int to, byte[] baseHash, int nbytes=1)
         {
             // guarantee there is enough bytes to consume
-            //(baseHash.Length >= (to-from)*nbytes).Assert();
+            (baseHash.Length >= (to-from)*nbytes).Assert();
             sbyte[] array = barray.AsSbyteArray();
             int k = 0;
             for(int i = from; i < to; i++)
@@ -188,7 +205,28 @@ namespace Neo.SmartContract
         {
             Runtime.Notify(b);
 
-/*
+            byte[] hash = b.SHA256();//.SHA256().SHA256().SHA256();
+            Runtime.Notify(hash);
+
+            //BigInteger bigx = hash.RandHash256(100);
+            //Runtime.Notify(bigx);
+            hash = hash.Concat(hash.SHA256());
+            hash = hash.Concat(hash.SHA256());
+            Runtime.Notify(hash); // 96 bytes
+            //byte[] b1 = b.ShuffleBytesChunk(0, b.Length, hash);
+            //byte[] b1 = hash;
+            //byte[] b2 = b.ShuffleBytesChunk(0, 5, hash);
+            //byte[] b3 = b2.ShuffleBytesChunk(5, b2.Length, hash.Range(5, hash.Length-3));
+
+            //byte[] b4 = b.ShuffleSubseqBytes(2, b.Length-2, hash);
+            //Runtime.Notify(b1);
+            //Runtime.Notify(b2);
+            //Runtime.Notify(b3);
+            //Runtime.Notify(b4);
+
+
+            sbyte[] sb = b.AsSbyteArray();
+            Runtime.Notify(sb);
             object[] array = new object[sb.Length];
 
             int i=0;
@@ -199,9 +237,7 @@ namespace Neo.SmartContract
                 //array[i] = new BigInteger(sb[i]); // strange problem: TODO
             }
 
-            //Runtime.Notify(array.Length);
-
-            byte[] nextHash = array.Shuffle256(0, array.Length, b.SHA256());
+            array.ShuffleArrayChunk(0, array.Length, hash);
 
             for(i=0; i<array.Length; i++)
             {
@@ -209,19 +245,10 @@ namespace Neo.SmartContract
                 sb[i] = elem;
             //    sb[i] = ((BigInteger)(array[i])).AsSbyte(); // causes strange error: TODO
             }
-*/
-            //sb = sb.ShuffleBytesSHA256(b.SHA256());
-            byte[] hash = b.SHA256().SHA256();
-            byte[] b1 = b.ShuffleBytesChunk(0, b.Length, hash);
-            //byte[] b2 = b.ShuffleBytesChunk(0, 5, hash);
-            //byte[] b3 = b2.ShuffleBytesChunk(5, b2.Length, hash.Range(5, hash.Length-3));
-            byte[] b4 = b.ShuffleSubseqBytes(2, b.Length-2, hash);
-            Runtime.Notify(b1);
-            //Runtime.Notify(b2);
-            //Runtime.Notify(b3);
-            Runtime.Notify(b4);
-            return b1;
 
+            Runtime.Notify(sb);
+
+            return sb.AsByteArray();//b;//b1;
         }
     }
 }
